@@ -1,20 +1,45 @@
-const dotenv = require('dotenv')
-const express = require('express')
-const mongodb = require('mongodb')
-
-const { getPutBodyIsAllowed } = require('./util')
-
-dotenv.config()
-
-const app = express()
-app.use(express.json())
-
+const dotenv = require('dotenv');
+const express = require('express');
+const mongodb = require('mongodb');
+const {getPutBodyIsAllowed} = require('./util');
+dotenv.config();
+const app = express();
+app.use(express.json());
 const port = process.env.PORT || 3000
-
 const uri = process.env.DATABASE_URI
 
 app.post('/api/books', function(request, response) {
-  // Make this work!
+  const client = mongodb.MongoClient(uri);
+  client.connect(() => {
+    const db= client.db("literature");
+    const collection = db.collection("books");
+    const title = request.query.title;
+    const author = request.query.author;
+    const author_birth_year =Number(request.query.author_birth_year);
+    const author_death_year =Number(request.query.author_death_year);
+    const url = request.query.url;
+    const book = {
+      title : title,
+      author:author,
+      author_birth_year:author_birth_year,
+      author_death_year:author_death_year,
+      url: url
+    }
+    if(title && author && author_birth_year && author_death_year && url){
+    collection.insertOne(book,(error,result) => {
+      if(error){
+        response.status(500).send(error);
+      }
+      else{
+        response.send(result)
+      }
+    })
+    client.close();
+  }
+  else{
+    response.send("please fill out all of the requested fields")
+  }
+  })
 })
 
 app.delete('/api/books/:id', function(request, response) {
