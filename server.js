@@ -42,9 +42,36 @@ app.post('/api/books', function(request, response) {
   })
 })
 
-app.delete('/api/books/:id', function(request, response) {
-  // Make this work, too!
-})
+app.delete('/api/books/:id', function(request,response) {
+  const client = new mongodb.MongoClient(uri,{useNewUrlParser:true});
+  client.connect(() => {
+    const db= client.db("literature");
+    const collection = db.collection("books");
+    let id = undefined;
+    const newID = request.params.id;
+    if(mongodb.ObjectID.isValid(newID)){
+      id = new mongodb.ObjectID(newID);
+      collection.deleteOne({_id:id},(error,result) => {
+        if(error){
+          response.send("Not Found this data");
+          client.close();
+        }
+        else if((result.ops[0]._id !== (id))){
+          response.send("Do not Have it");
+          client.close();
+        }
+        else{
+          response.send("Deleted");
+          client.close();
+        }
+      })
+    }
+    else{
+      return response.status(400).send("This ID is not valid")
+    }
+    })
+  })
+
 
 app.put('/api/books/:id', function(request, response) {
   // Also make this work!
