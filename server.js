@@ -74,7 +74,50 @@ app.delete('/api/books/:id', function(request,response) {
 
 
 app.put('/api/books/:id', function(request, response) {
-  // Also make this work!
+  const client = new mongodb.MongoClient(uri);
+  client.connect(() => {
+    const db= client.db("literature");
+    const collection = db.collection("books");
+    const {id} = request.params;
+    const title = request.body.title;
+    const year = request.body.year;
+    const actors = request.body.actors;
+    let newId;
+    if(mongodb.ObjectID.isValid(id)){
+      newId = new mongodb.ObjectID(id);
+      const searchObject = {
+       _id : newId
+      };
+      const updateObject = {
+        $set: {
+          title: title,
+          year:year,
+          actors:actors
+        },
+      };
+      const options = { returnOriginal: false };
+      if(title && year && actors && newId){
+      collection.findOneAndUpdate(searchObject,updateObject,options,(error,result) => {
+        if(error){
+          response.send(error);
+          client.close();
+        }
+        else{
+          response.send(result.value);
+          client.close();
+        }
+      })
+     }
+     else{
+      response.send("Sorry something went wrong! please check your updating data");
+      client.close();
+     }
+    }
+    else{
+      response.status(400).send("Sorry something went wrong!");
+      client.close();
+    }
+  })
 })
 
 app.get('/api/books', function(request, response) {
