@@ -31,7 +31,7 @@ app.post('/api/books', function(request, response) {
         response.status(500).send(error);
       }
       else{
-        response.send(result)
+        response.send(result.ops[0])
       }
     })
     client.close();
